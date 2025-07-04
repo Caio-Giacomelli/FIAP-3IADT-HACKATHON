@@ -16,7 +16,7 @@ uploaded_file = st.file_uploader("📤 Upload an architecture image", type=["png
 
 if azure_endpoint and azure_key and uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Diagram", use_column_width=True)
+    st.image(image, caption="Uploaded Diagram", use_container_width=True)
 
     if st.button("🔍 Analyze Image"):
         st.info("Connecting to Azure Computer Vision and analyzing the image...")
