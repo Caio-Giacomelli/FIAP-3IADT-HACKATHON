@@ -14,7 +14,7 @@ Inclusão de riscos, mitigações e referências para cada seção STRIDE no rel
 
 Geração de uma tabela resumo com os riscos e mitigações.
 
-Opção de download do relatório gerado em formato .docx.
+Opção de download do relatório gerado em formato .pdf.
 
 ## Pré-requisitos
 
@@ -24,20 +24,21 @@ Python 3.7 ou superior
 
 pip (gerenciador de pacotes do Python)
 
-## Você também precisará de credenciais válidas para:
+## Você também precisará de credenciais válidas!
 
-Azure Computer Vision: Endpoint e chave de assinatura.
-
-OpenAI: Chave de API.
+Gere um arquivo `.env` no repositório e adicione as credenciais abaixo:
+- AZURE_ENDPOINT (endpoint para o serviço de Computer Vision da Azure)
+- AZURE_API_KEY (chave de API para o serviço de Computer Vision da Azure)
+- OPENAI_API_KEY (chave de API para o uso do modelo da OpenAI)
 
 ## Instalação
 
 Clone este repositório (ou copie o código do notebook para um arquivo .py) e rode os seguintes comandos:
 
-  python -m venv .venv
-  
-  source .venv/bin/activate  # No Windows use `.venv\Scripts\activate`
-   
-  pip install streamlit azure-cognitiveservices-vision-computervision msrest docx openai pillow
+python -m venv .venv
 
-  streamlit run app.py
+source .venv/bin/activate  # No Windows use `.venv\Scripts\activate`
+  
+pip install -r requirements.txt
+
+streamlit run streamlitapp.py

@@ -1,24 +1,26 @@
 import streamlit as st
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
-from PIL import Image
 import io
 import openai
-import os
 import time
-from docx import Document
+from dotenv import load_dotenv
+import os
+from markdown_pdf import MarkdownPdf, Section
+
+load_dotenv()
 
 st.set_page_config(page_title="Gerador de Relatório STRIDE", layout="centered")
 st.title("📊 Gerador de Relatório STRIDE")
-
-st.markdown("### 🔐 Credenciais da Azure Computer Vision")
-endpoint = st.text_input("Azure Endpoint")
-key = st.text_input("Azure Key", type="password")
-
-st.markdown("### 🔐 Credenciais da OpenAI")
-openai_api_key = st.text_input("OpenAI API Key", type="password")
+endpoint = os.getenv("AZURE_ENDPOINT")
+key = os.getenv("AZURE_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"])
+
+if not endpoint or not key or not openai_api_key:
+    st.error("Por favor, configure as credenciais no arquivo .env")
+    st.stop()
 
 # Only process if not already done and inputs are valid
 if uploaded_file and endpoint and key and openai_api_key:
@@ -87,34 +89,25 @@ Extracted Text:
         report_text = response.choices[0].message.content
         st.session_state.report_text = report_text
 
-        # Generate Word document
-        doc = Document()
-        doc.add_heading('Relatório Stride', 0)
-        for line in report_text.split('\n'):
-            if line.startswith("**") and line.endswith("**"):
-                doc.add_heading(line.replace("**", ""), level=1)
-            else:
-                doc.add_paragraph(line)
+        # Generate PDF document using markdown-pdf
+        pdf = MarkdownPdf(toc_level=2, optimize=True)
+        pdf.add_section(Section(report_text))
+        pdf.meta["title"] = "Relatório Stride"
 
         buffer = io.BytesIO()
-        doc.save(buffer)
+        pdf.save(buffer)
         buffer.seek(0)
-        st.session_state.doc_buffer = buffer
+        st.session_state.pdf_buffer = buffer
 
-# If already processed, show results
-if "report_text" in st.session_state:
+    if "report_text" in st.session_state:
+        st.markdown("### 🧾 Relatório Stride")
+        st.markdown(st.session_state.report_text)
 
-    st.markdown("### 🧾 Relatório Stride")
-    st.markdown(st.session_state.report_text)
-
-    st.download_button(
-        label="📄 Download Relatório Stride (.docx)",
-        data=st.session_state.doc_buffer,
-        file_name="Relatorio_Stride.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-
-elif uploaded_file:
-    st.info("O processamento inicializará assim que todas as credenciais forem submetidas")
+        st.download_button(
+            label="📄 Download Relatório Stride (.pdf)",
+            data=st.session_state.pdf_buffer,
+            file_name="Relatorio_Stride.pdf",
+            mime="application/pdf"
+        )
 else:
-    st.warning("Por favor, coloque as credenciais e carregue a imagem do diagrama")
+    st.warning("Por favor, carregue a imagem do diagrama")
