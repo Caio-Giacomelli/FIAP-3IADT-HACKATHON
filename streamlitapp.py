@@ -58,6 +58,7 @@ if uploaded_file and endpoint and key and openai_api_key:
         # Prompt Engineering
         prompt = f"""
 You are a system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
+Do not generate any observation or follow-up commentary after the STRIDE report. 
 Based on the following extracted architecture diagram text, write a STRIDE report in brazillian portuguese with the following sections:
 
 1. **Spoofing**
