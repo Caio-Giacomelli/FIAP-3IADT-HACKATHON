@@ -1,40 +1,43 @@
 import streamlit as st
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
-from azure.ai.openai import OpenAIClient
-from azure.core.credentials import AzureKeyCredential
 from PIL import Image
 import io
-import time
-from docx import Document
+import openai
+import os
 
-st.set_page_config(page_title="STRADE Analyzer", layout="centered")
-st.title("🧠 STRADE Report from Architecture Diagram")
 
-st.markdown("### 📌 Azure Computer Vision Credentials")
-cv_endpoint = st.text_input("Computer Vision Endpoint")
-cv_key = st.text_input("Computer Vision Key", type="password")
+st.set_page_config(page_title="STRADE Generator", layout="centered")
+st.title("📊 STRADE Architecture Report Generator")
 
-st.markdown("### 🤖 Azure OpenAI Credentials")
-aoai_endpoint = st.text_input("Azure OpenAI Endpoint (e.g., https://YOUR-RESOURCE.openai.azure.com/)")
-aoai_key = st.text_input("Azure OpenAI Key", type="password")
-aoai_deployment = st.text_input("Deployment Name (e.g., gpt-4 or gpt-35-turbo)")
 
-uploaded_file = st.file_uploader("📁 Upload your architecture diagram image", type=["png", "jpg", "jpeg"])
+st.markdown("### 🔐 Azure Computer Vision Credentials")
+endpoint = st.text_input("Azure Endpoint")
+key = st.text_input("Azure Key", type="password")
 
-if uploaded_file and all([cv_endpoint, cv_key, aoai_endpoint, aoai_key, aoai_deployment]):
-    st.success("Processing your image and generating the report...")
+
+openai_api_key = st.text_input("OpenAI API Key", type="password")
+
+uploaded_file = st.file_uploader("📁 Upload Architecture Diagram", type=["png", "jpg", "jpeg"])
+
+if uploaded_file and endpoint and key and openai_api_key:
+    st.success("Processing image...")
+
 
     computervision_client = ComputerVisionClient(
-        cv_endpoint, CognitiveServicesCredentials(cv_key)
+        endpoint, CognitiveServicesCredentials(key)
     )
 
+    # Read image
     image_bytes = uploaded_file.read()
     image_stream = io.BytesIO(image_bytes)
 
-    ocr_response = computervision_client.read_in_stream(image_stream, raw=True)
-    operation_id = ocr_response.headers["Operation-Location"].split("/")[-1]
 
+    ocr_result = computervision_client.read_in_stream(image_stream, raw=True)
+    operation_location = ocr_result.headers["Operation-Location"]
+    operation_id = operation_location.split("/")[-1]
+
+    import time
     while True:
         result = computervision_client.get_read_result(operation_id)
         if result.status not in ['notStarted', 'running']:
@@ -47,30 +50,31 @@ if uploaded_file and all([cv_endpoint, cv_key, aoai_endpoint, aoai_key, aoai_dep
             for line in page.lines:
                 extracted_text += line.text + "\n"
     else:
-        st.error("❌ Failed to extract text from image.")
+        st.error("❌ OCR failed.")
         st.stop()
 
-    st.markdown("### 📝 Extracted Text from Image")
-    st.text_area("OCR Result", extracted_text, height=200)
+    st.markdown("### 📝 Extracted Text")
+    st.text_area("OCR Output", extracted_text, height=200)
+
 
     prompt = f"""
-You are a system architecture analyst. Based on the following OCR-extracted text from a system architecture diagram, generate a STRADE report with these sections:
+You are a system architect assistant. Based on the following extracted architecture diagram text, write a STRADE report with the following sections:
 
 1. **Structure** – Describe the overall architecture and how components are organized.
-2. **Technology Stack** – Mention languages, cloud services, APIs, databases, etc.
-3. **Risks** – Identify technical or operational risks.
-4. **Assumptions** – List assumptions based on the diagram.
-5. **Decisions** – Note architectural decisions visible.
-6. **Evolution** – Suggest how this system could evolve over time.
+2. **Technology Stack** – Mention programming languages, cloud services, APIs, databases, etc.
+3. **Risks** – Identify potential technical or operational risks.
+4. **Assumptions** – List key assumptions based on the diagram.
+5. **Decisions** – Note any architectural decisions visible.
+6. **Evolution** – Suggest how the architecture could evolve.
 
-OCR Text:
+Extracted Text:
 {extracted_text}
 """
 
-    aoai_client = OpenAIClient(aoai_endpoint, AzureKeyCredential(aoai_key))
 
-    completion = aoai_client.chat_completions.create(
-        deployment_id=aoai_deployment,
+    openai.api_key = openai_api_key
+    response = openai.ChatCompletion.create(
+        model="gpt-4", 
         messages=[
             {"role": "system", "content": "You are a software architecture analyst."},
             {"role": "user", "content": prompt}
@@ -78,29 +82,29 @@ OCR Text:
         temperature=0.4
     )
 
-    report_text = completion.choices[0].message.content
+    strade_report = response['choices'][0]['message']['content']
+    st.markdown("### 🧾 STRADE Report")
+    st.markdown(strade_report)
 
-
-    st.markdown("### 📄 STRADE Report")
-    st.markdown(report_text)
-
+    from docx import Document
     doc = Document()
-    doc.add_heading("STRADE Report", 0)
-    for line in report_text.split("\n"):
+    doc.add_heading('STRADE Report', 0)
+    for line in strade_report.split('\n'):
         if line.startswith("**") and line.endswith("**"):
             doc.add_heading(line.replace("**", ""), level=1)
         else:
             doc.add_paragraph(line)
 
-    doc_buffer = io.BytesIO()
-    doc.save(doc_buffer)
-    doc_buffer.seek(0)
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
 
     st.download_button(
-        label="📥 Download STRADE Report (.docx)",
-        data=doc_buffer,
+        label="📄 Download STRADE Report (.docx)",
+        data=buffer,
         file_name="STRADE_Report.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+
 else:
-    st.info("Enter credentials and upload an image to start.")
+    st.warning("Please enter credentials and upload an image.")
