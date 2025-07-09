@@ -73,7 +73,7 @@ Extracted Text:
 
         client = openai.OpenAI(api_key=openai_api_key)
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "You are a system architecture analyst."},
                 {"role": "user", "content": prompt}
