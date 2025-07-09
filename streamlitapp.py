@@ -4,10 +4,9 @@ from msrest.authentication import CognitiveServicesCredentials
 from PIL import Image
 import io
 import openai
+import os
 import time
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
+from docx import Document
 
 st.set_page_config(page_title="STRADE Generator", layout="centered")
 st.title("📊 STRADE Architecture Report Generator")
@@ -82,28 +81,19 @@ Extracted Text:
         report_text = response.choices[0].message.content
         st.session_state.report_text = report_text
 
-        # Create PDF
-        pdf_buffer = io.BytesIO()
-        c = canvas.Canvas(pdf_buffer, pagesize=A4)
-        width, height = A4
-        margin = inch * 0.75
-        textobject = c.beginText(margin, height - margin)
-        textobject.setFont("Helvetica", 11)
-
-        for line in report_text.split("\n"):
-            if line.strip() == "":
-                textobject.textLine(" ")
+        # Generate Word document
+        doc = Document()
+        doc.add_heading('STRADE Report', 0)
+        for line in report_text.split('\n'):
+            if line.startswith("**") and line.endswith("**"):
+                doc.add_heading(line.replace("**", ""), level=1)
             else:
-                # wrap lines longer than page width
-                for subline in line.split("\n"):
-                    textobject.textLines(subline)
+                doc.add_paragraph(line)
 
-        c.drawText(textobject)
-        c.showPage()
-        c.save()
-        pdf_buffer.seek(0)
-
-        st.session_state.pdf_buffer = pdf_buffer
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        st.session_state.doc_buffer = buffer
 
 # If already processed, show results
 if "report_text" in st.session_state:
@@ -114,10 +104,10 @@ if "report_text" in st.session_state:
     st.markdown(st.session_state.report_text)
 
     st.download_button(
-        label="📄 Download STRADE Report (.pdf)",
-        data=st.session_state.pdf_buffer,
-        file_name="STRADE_Report.pdf",
-        mime="application/pdf"
+        label="📄 Download STRADE Report (.docx)",
+        data=st.session_state.doc_buffer,
+        file_name="STRADE_Report.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
 elif uploaded_file:
