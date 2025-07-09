@@ -102,6 +102,8 @@ Extracted Text:
     doc.save(buffer)
     buffer.seek(0)
 
+    openai_api_key = ""
+
     st.download_button(
         label="📄 Download STRADE Report (.docx)",
         data=buffer,
