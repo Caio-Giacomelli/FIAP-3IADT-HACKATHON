@@ -76,7 +76,7 @@ Extracted Text:
     client = openai.OpenAI(api_key=openai_api_key)
     
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a system architecture analyst."},
             {"role": "user", "content": prompt}
@@ -86,14 +86,13 @@ Extracted Text:
 
     report_text = response.choices[0].message.content
 
-    strade_report = response['choices'][0]['message']['content']
     st.markdown("### 🧾 STRADE Report")
     st.markdown(strade_report)
 
     from docx import Document
     doc = Document()
     doc.add_heading('STRADE Report', 0)
-    for line in strade_report.split('\n'):
+    for line in report_text.split('\n'):
         if line.startswith("**") and line.endswith("**"):
             doc.add_heading(line.replace("**", ""), level=1)
         else:
