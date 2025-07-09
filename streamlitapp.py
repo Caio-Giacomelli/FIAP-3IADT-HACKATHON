@@ -1,58 +1,106 @@
 import streamlit as st
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
+from azure.ai.openai import OpenAIClient
+from azure.core.credentials import AzureKeyCredential
 from PIL import Image
 import io
+import time
+from docx import Document
 
-st.title("🧠 System Architecture Image Analyzer")
-st.subheader("Upload a system architecture diagram and let Azure Vision help describe it!")
+st.set_page_config(page_title="STRADE Analyzer", layout="centered")
+st.title("🧠 STRADE Report from Architecture Diagram")
+
+st.markdown("### 📌 Azure Computer Vision Credentials")
+cv_endpoint = st.text_input("Computer Vision Endpoint")
+cv_key = st.text_input("Computer Vision Key", type="password")
+
+st.markdown("### 🤖 Azure OpenAI Credentials")
+aoai_endpoint = st.text_input("Azure OpenAI Endpoint (e.g., https://YOUR-RESOURCE.openai.azure.com/)")
+aoai_key = st.text_input("Azure OpenAI Key", type="password")
+aoai_deployment = st.text_input("Deployment Name (e.g., gpt-4 or gpt-35-turbo)")
+
+uploaded_file = st.file_uploader("📁 Upload your architecture diagram image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file and all([cv_endpoint, cv_key, aoai_endpoint, aoai_key, aoai_deployment]):
+    st.success("Processing your image and generating the report...")
+
+    computervision_client = ComputerVisionClient(
+        cv_endpoint, CognitiveServicesCredentials(cv_key)
+    )
+
+    image_bytes = uploaded_file.read()
+    image_stream = io.BytesIO(image_bytes)
+
+    ocr_response = computervision_client.read_in_stream(image_stream, raw=True)
+    operation_id = ocr_response.headers["Operation-Location"].split("/")[-1]
+
+    while True:
+        result = computervision_client.get_read_result(operation_id)
+        if result.status not in ['notStarted', 'running']:
+            break
+        time.sleep(1)
+
+    extracted_text = ""
+    if result.status == 'succeeded':
+        for page in result.analyze_result.read_results:
+            for line in page.lines:
+                extracted_text += line.text + "\n"
+    else:
+        st.error("❌ Failed to extract text from image.")
+        st.stop()
+
+    st.markdown("### 📝 Extracted Text from Image")
+    st.text_area("OCR Result", extracted_text, height=200)
+
+    prompt = f"""
+You are a system architecture analyst. Based on the following OCR-extracted text from a system architecture diagram, generate a STRADE report with these sections:
+
+1. **Structure** – Describe the overall architecture and how components are organized.
+2. **Technology Stack** – Mention languages, cloud services, APIs, databases, etc.
+3. **Risks** – Identify technical or operational risks.
+4. **Assumptions** – List assumptions based on the diagram.
+5. **Decisions** – Note architectural decisions visible.
+6. **Evolution** – Suggest how this system could evolve over time.
+
+OCR Text:
+{extracted_text}
+"""
+
+    aoai_client = OpenAIClient(aoai_endpoint, AzureKeyCredential(aoai_key))
+
+    completion = aoai_client.chat_completions.create(
+        deployment_id=aoai_deployment,
+        messages=[
+            {"role": "system", "content": "You are a software architecture analyst."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.4
+    )
+
+    report_text = completion.choices[0].message.content
 
 
-st.markdown("#### 🔐 Enter your Azure Computer Vision credentials:")
-azure_endpoint = st.text_input("Azure Endpoint", type="default")
-azure_key = st.text_input("Azure Key", type="password")
+    st.markdown("### 📄 STRADE Report")
+    st.markdown(report_text)
 
-uploaded_file = st.file_uploader("📤 Upload an architecture image", type=["png", "jpg", "jpeg"])
+    doc = Document()
+    doc.add_heading("STRADE Report", 0)
+    for line in report_text.split("\n"):
+        if line.startswith("**") and line.endswith("**"):
+            doc.add_heading(line.replace("**", ""), level=1)
+        else:
+            doc.add_paragraph(line)
 
-if azure_endpoint and azure_key and uploaded_file:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Diagram", use_container_width=True)
+    doc_buffer = io.BytesIO()
+    doc.save(doc_buffer)
+    doc_buffer.seek(0)
 
-    if st.button("🔍 Analyze Image"):
-        st.info("Connecting to Azure Computer Vision and analyzing the image...")
-
-        try:
-            client = ComputerVisionClient(
-                azure_endpoint, CognitiveServicesCredentials(azure_key)
-            )
-
-            uploaded_file.seek(0)
-            image_stream = uploaded_file
-
-            analysis = client.analyze_image_in_stream(
-                image=image_stream,
-                visual_features=["Description", "Tags", "Objects"]
-            )
-
-            description = analysis.description.captions[0].text if analysis.description.captions else "No description available."
-            tags = [tag.name for tag in analysis.tags]
-            objects = [obj.object_property for obj in analysis.objects]
-
-            st.markdown("### ✅ Azure Vision Result")
-            st.write(f"**Description:** {description}")
-            st.write(f"**Tags:** {', '.join(tags)}")
-            st.write(f"**Detected Objects:** {', '.join(objects) if objects else 'None'}")
-
-            st.markdown("### 🧠 AI-Powered Summary")
-            st.markdown(f"""
-            Based on Azure's vision analysis, this diagram likely includes:
-
-            - Common components: **{', '.join(objects) or 'Not detected'}**
-            - Tags suggesting architectural elements: **{', '.join(tags)}**
-            - General context: *"{description}"*
-            """)
-
-        except Exception as e:
-            st.error(f"❌ Error during analysis: {e}")
+    st.download_button(
+        label="📥 Download STRADE Report (.docx)",
+        data=doc_buffer,
+        file_name="STRADE_Report.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 else:
-    st.warning("Please provide your Azure endpoint, key, and upload an image.")
+    st.info("Enter credentials and upload an image to start.")
