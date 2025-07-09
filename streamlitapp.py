@@ -103,8 +103,6 @@ Extracted Text:
 
 # If already processed, show results
 if "report_text" in st.session_state:
-    st.markdown("### 📝 Texto Extraído")
-    st.text_area("OCR Output", st.session_state.extracted_text, height=200)
 
     st.markdown("### 🧾 Relatório Stride")
     st.markdown(st.session_state.report_text)
