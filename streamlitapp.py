@@ -73,7 +73,7 @@ Extracted Text:
 
 
 
-    client = openai.OpenAI(api_key="your_openai_api_key")
+    client = openai.OpenAI(api_key=openai_api_key)
     
     response = client.chat.completions.create(
         model="gpt-4",
