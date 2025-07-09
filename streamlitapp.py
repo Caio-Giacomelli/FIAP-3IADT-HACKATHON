@@ -9,20 +9,22 @@ import time
 from docx import Document
 
 st.set_page_config(page_title="STRADE Generator", layout="centered")
-st.title("📊 STRADE Architecture Report Generator")
+st.title("📊 Gerador de Relatório STRADE")
 
-st.markdown("### 🔐 Azure Computer Vision Credentials")
+st.markdown("### 🔐 Credenciais da Azure Computer Vision")
 endpoint = st.text_input("Azure Endpoint")
 key = st.text_input("Azure Key", type="password")
+
+st.markdown("### 🔐 Credenciais da OpenAI")
 openai_api_key = st.text_input("OpenAI API Key", type="password")
 
-uploaded_file = st.file_uploader("📁 Upload Architecture Diagram", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"])
 
 # Only process if not already done and inputs are valid
 if uploaded_file and endpoint and key and openai_api_key:
 
     if "report_text" not in st.session_state:
-        st.success("Processing image...")
+        st.success("Processando a imagem...")
 
         computervision_client = ComputerVisionClient(
             endpoint, CognitiveServicesCredentials(key)
@@ -83,7 +85,7 @@ Extracted Text:
 
         # Generate Word document
         doc = Document()
-        doc.add_heading('STRADE Report', 0)
+        doc.add_heading('Relatório STRADE', 0)
         for line in report_text.split('\n'):
             if line.startswith("**") and line.endswith("**"):
                 doc.add_heading(line.replace("**", ""), level=1)
@@ -97,20 +99,20 @@ Extracted Text:
 
 # If already processed, show results
 if "report_text" in st.session_state:
-    st.markdown("### 📝 Extracted Text")
+    st.markdown("### 📝 Texto Extraído")
     st.text_area("OCR Output", st.session_state.extracted_text, height=200)
 
-    st.markdown("### 🧾 STRADE Report")
+    st.markdown("### 🧾 Relatório STRADE")
     st.markdown(st.session_state.report_text)
 
     st.download_button(
-        label="📄 Download STRADE Report (.docx)",
+        label="📄 Download Relatório STRADE (.docx)",
         data=st.session_state.doc_buffer,
-        file_name="STRADE_Report.docx",
+        file_name="Relatorio_STRADE.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
 elif uploaded_file:
-    st.info("Processing will begin once all credentials are entered.")
+    st.info("O processamento inicializará assim que todas as credenciais forem submetidas")
 else:
-    st.warning("Please enter credentials and upload an image.")
+    st.warning("Por favor, coloque as credenciais e carregue a imagem do diagrama")
