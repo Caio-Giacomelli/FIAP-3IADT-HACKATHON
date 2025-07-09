@@ -72,15 +72,19 @@ Extracted Text:
 """
 
 
-    openai.api_key = openai_api_key
-    response = openai.ChatCompletion.create(
-        model="gpt-4", 
-        messages=[
-            {"role": "system", "content": "You are a software architecture analyst."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.4
-    )
+
+client = openai.OpenAI(api_key="your_openai_api_key")
+
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {"role": "system", "content": "You are a system architecture analyst."},
+        {"role": "user", "content": prompt}
+    ],
+    temperature=0.4,
+)
+
+report_text = response.choices[0].message.content
 
     strade_report = response['choices'][0]['message']['content']
     st.markdown("### 🧾 STRADE Report")
