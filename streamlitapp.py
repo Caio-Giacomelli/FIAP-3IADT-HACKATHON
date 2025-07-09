@@ -104,10 +104,10 @@ if "report_text" in st.session_state:
     st.markdown(st.session_state.report_text)
 
     st.download_button(
-        label="📄 Download STRADE Report (.docx)",
+        label="📄 Download STRADE Report (.pdf)",
         data=st.session_state.doc_buffer,
-        file_name="STRADE_Report.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        file_name="STRADE_Report.pdf",
+        mime="application/pdf"
     )
 
 elif uploaded_file:
