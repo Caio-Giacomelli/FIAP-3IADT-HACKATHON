@@ -87,7 +87,7 @@ Extracted Text:
     report_text = response.choices[0].message.content
 
     st.markdown("### 🧾 STRADE Report")
-    st.markdown(strade_report)
+    st.markdown(report_text)
 
     from docx import Document
     doc = Document()
