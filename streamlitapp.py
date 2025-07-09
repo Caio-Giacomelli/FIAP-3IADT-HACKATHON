@@ -68,6 +68,8 @@ Based on the following extracted architecture diagram text, write a STRIDE repor
 5. **Denial of Service**
 6. **Elevation of Privilege**
 
+After the STRIDE Report, generate a table in markdown, with all the stride sections in one column, risks in the second column and mitigation in the third column. Be very concise on the second and third columns.
+
 Extracted Text:
 {extracted_text}
 """
