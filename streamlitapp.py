@@ -8,8 +8,8 @@ import os
 import time
 from docx import Document
 
-st.set_page_config(page_title="STRADE Generator", layout="centered")
-st.title("📊 Gerador de Relatório STRADE")
+st.set_page_config(page_title="Gerador de Relatório STRIDE", layout="centered")
+st.title("📊 Gerador de Relatório STRIDE")
 
 st.markdown("### 🔐 Credenciais da Azure Computer Vision")
 endpoint = st.text_input("Azure Endpoint")
@@ -58,14 +58,14 @@ if uploaded_file and endpoint and key and openai_api_key:
         # Prompt Engineering
         prompt = f"""
 You are a system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
-Based on the following extracted architecture diagram text, write a STRADE report in brazillian portuguese with the following sections:
+Based on the following extracted architecture diagram text, write a STRIDE report in brazillian portuguese with the following sections:
 
-1. **Structure** – Describe the overall architecture and how components are organized.
-2. **Technology Stack** – Mention programming languages, cloud services, APIs, databases, etc.
-3. **Risks** – Identify potential technical or operational risks.
-4. **Assumptions** – List key assumptions based on the diagram.
-5. **Decisions** – Note any architectural decisions visible.
-6. **Evolution** – Suggest how the architecture could evolve.
+1. **Spoofing**
+2. **Tampering**
+3. **Repudiation**
+4. **Information Disclosure**
+5. **Denial of Service**
+6. **Elevation of Privilege**
 
 Extracted Text:
 {extracted_text}
@@ -86,7 +86,7 @@ Extracted Text:
 
         # Generate Word document
         doc = Document()
-        doc.add_heading('Relatório STRADE', 0)
+        doc.add_heading('Relatório Stride', 0)
         for line in report_text.split('\n'):
             if line.startswith("**") and line.endswith("**"):
                 doc.add_heading(line.replace("**", ""), level=1)
@@ -103,13 +103,13 @@ if "report_text" in st.session_state:
     st.markdown("### 📝 Texto Extraído")
     st.text_area("OCR Output", st.session_state.extracted_text, height=200)
 
-    st.markdown("### 🧾 Relatório STRADE")
+    st.markdown("### 🧾 Relatório Stride")
     st.markdown(st.session_state.report_text)
 
     st.download_button(
-        label="📄 Download Relatório STRADE (.docx)",
+        label="📄 Download Relatório Stride (.docx)",
         data=st.session_state.doc_buffer,
-        file_name="Relatorio_STRADE.docx",
+        file_name="Relatorio_Stride.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
