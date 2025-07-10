@@ -43,13 +43,12 @@ def process_image(uploaded_file, prompts):
         try:
             image_bytes = uploaded_file.read()
             st.session_state.extracted_text = analyze_diagram(image_bytes, endpoint, key)
-            st.markdown(f"### 🧾 Componentes identificados")
-            st.markdown(st.session_state.extracted_text)
         except Exception as e:
             st.error(f"Erro ao processar a imagem ou gerar o relatório: {e}")
             st.stop()
 
-
+    st.markdown(f"### 🧾 Componentes identificados")
+    st.markdown(st.session_state.extracted_text)
     with st.spinner("Gerando relatórios..."):
         try:
             responses = generate_stride_report(st.session_state.extracted_text, prompts, openai_api_key)

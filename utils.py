@@ -1,6 +1,12 @@
 prompts = [
             # Prompt Base
             """
+Write a STRIDE report in brazillian portuguese for the following extracted architecture diagram text:
+Extracted Text:
+{extracted_text}
+""",
+            # Prompt Especializado
+            """
 You are a system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
 Do not generate any observation or follow-up commentary after the STRIDE report. 
 Based on the following extracted architecture diagram text, write a STRIDE report in brazillian portuguese, adding the risks, mitigation and references for the following sections:
@@ -31,13 +37,14 @@ Você é um arquiteto de sistemas especializado em segurança. Analise cuidadosa
 Não inclua comentários adicionais ou conclusões após o relatório.
 Ao final, gere uma tabela em markdown resumindo cada seção STRIDE, seus principais riscos e as respectivas mitigações de forma objetiva.
 
-Texto extraído:
+Texto extraído (em inglês):
 {extracted_text}
 """,
 ]
 
 prompt_titles = [
     "Prompt Base",
+    "Prompt Especializado",
     "Prompt Reduzido",
     "Prompt em Português"
 ]
