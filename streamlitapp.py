@@ -1,113 +1,82 @@
 import streamlit as st
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
-import io
-import openai
-import time
-from dotenv import load_dotenv
 import os
-from markdown_pdf import MarkdownPdf, Section
+from dotenv import load_dotenv
+from diagram_analyzer import analyze_diagram, generate_stride_report
+from pdf_generator import generate_stride_pdf, add_pdf_download_button
+from utils import prompts, prompt_titles
 
 load_dotenv()
-
-st.set_page_config(page_title="Gerador de Relatório STRIDE", layout="centered")
-st.title("📊 Gerador de Relatório STRIDE")
 endpoint = os.getenv("AZURE_ENDPOINT")
 key = os.getenv("AZURE_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"])
+st.set_page_config(page_title="Gerador de Relatório STRIDE", layout="centered")
+st.title("📊 Gerador de Relatório STRIDE")
+
+def clear_session_state():
+    if "stride_reports" in st.session_state:
+        del st.session_state.stride_reports
+    if "stride_prompts" in st.session_state:
+        del st.session_state.stride_prompts
+    if "pdf_buffers" in st.session_state:
+        del st.session_state.pdf_buffers
+    if "extracted_text" in st.session_state:
+        del st.session_state.extracted_text
+
+def display_results():
+    stride_reports = st.session_state.stride_reports
+    pdf_buffers = st.session_state.pdf_buffers
+
+    tabs = st.tabs(prompt_titles)
+    for i, tab in enumerate(tabs):
+        with tab:
+            st.markdown(f"### 🧾 Relatório Stride - {prompt_titles[i]}")
+            st.markdown(stride_reports[i])
+            add_pdf_download_button(
+                pdf_buffers[i],
+                label=f"📄 Download Relatório Stride ({prompt_titles[i]}).pdf",
+                file_name=f"Relatorio_Stride_{i+1}.pdf"
+            )
+
+def process_image(uploaded_file, prompts):
+    with st.spinner("Processando a imagem..."):
+        try:
+            image_bytes = uploaded_file.read()
+            st.session_state.extracted_text = analyze_diagram(image_bytes, endpoint, key)
+            st.markdown(f"### 🧾 Componentes identificados")
+            st.markdown(st.session_state.extracted_text)
+        except Exception as e:
+            st.error(f"Erro ao processar a imagem ou gerar o relatório: {e}")
+            st.stop()
+
+
+    with st.spinner("Gerando relatórios..."):
+        try:
+            responses = generate_stride_report(st.session_state.extracted_text, prompts, openai_api_key)
+            stride_reports = [resp['report'] for resp in responses]
+            stride_prompts = [resp['prompt'] for resp in responses]
+            pdf_buffers = [generate_stride_pdf(stride_prompts[i], stride_reports[i]) for i in range(len(stride_reports))]
+
+            st.session_state.stride_reports = stride_reports
+            st.session_state.stride_prompts = stride_prompts
+            st.session_state.pdf_buffers = pdf_buffers
+        except Exception as e:
+            st.error(f"Erro ao gerar relatórios: {e}")
+            st.stop()
+
+
+uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"], on_change=clear_session_state)
 
 if not endpoint or not key or not openai_api_key:
     st.error("Por favor, configure as credenciais no arquivo .env")
     st.stop()
 
-# Only process if not already done and inputs are valid
 if uploaded_file and endpoint and key and openai_api_key:
-
-    if "report_text" not in st.session_state:
-        st.success("Processando a imagem...")
-
-        computervision_client = ComputerVisionClient(
-            endpoint, CognitiveServicesCredentials(key)
-        )
-
-        # Read image
-        image_bytes = uploaded_file.read()
-        image_stream = io.BytesIO(image_bytes)
-
-        ocr_result = computervision_client.read_in_stream(image_stream, raw=True)
-        operation_location = ocr_result.headers["Operation-Location"]
-        operation_id = operation_location.split("/")[-1]
-
-        while True:
-            result = computervision_client.get_read_result(operation_id)
-            if result.status not in ['notStarted', 'running']:
-                break
-            time.sleep(1)
-
-        extracted_text = ""
-        if result.status == 'succeeded':
-            for page in result.analyze_result.read_results:
-                for line in page.lines:
-                    extracted_text += line.text + "\n"
-        else:
-            st.error("❌ OCR failed.")
-            st.stop()
-
-        st.session_state.extracted_text = extracted_text
-
-        # Prompt Engineering
-        prompt = f"""
-You are a system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
-Do not generate any observation or follow-up commentary after the STRIDE report. 
-Based on the following extracted architecture diagram text, write a STRIDE report in brazillian portuguese, adding the risks, mitigation and references for the following sections:
-
-1. **Spoofing**
-2. **Tampering**
-3. **Repudiation**
-4. **Information Disclosure**
-5. **Denial of Service**
-6. **Elevation of Privilege**
-
-After the STRIDE Report, generate a table in markdown, with all the stride sections in one column, risks in the second column and mitigation in the third column. Be very concise on the second and third columns.
-
-Extracted Text:
-{extracted_text}
-"""
-
-        client = openai.OpenAI(api_key=openai_api_key)
-        response = client.chat.completions.create(
-            model="gpt-4.1",
-            messages=[
-                {"role": "system", "content": "You are a system architecture analyst."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.4,
-        )
-
-        report_text = response.choices[0].message.content
-        st.session_state.report_text = report_text
-
-        # Generate PDF document using markdown-pdf
-        pdf = MarkdownPdf(toc_level=2, optimize=True)
-        pdf.add_section(Section(report_text))
-        pdf.meta["title"] = "Relatório Stride"
-
-        buffer = io.BytesIO()
-        pdf.save(buffer)
-        buffer.seek(0)
-        st.session_state.pdf_buffer = buffer
-
-    if "report_text" in st.session_state:
-        st.markdown("### 🧾 Relatório Stride")
-        st.markdown(st.session_state.report_text)
-
-        st.download_button(
-            label="📄 Download Relatório Stride (.pdf)",
-            data=st.session_state.pdf_buffer,
-            file_name="Relatorio_Stride.pdf",
-            mime="application/pdf"
-        )
+    st.image(uploaded_file, caption="Diagrama de Arquitetura enviado", use_container_width=True)
+    if "stride_reports" not in st.session_state:
+        process_image(uploaded_file, prompts)
+        display_results()
+    else:
+        display_results()
 else:
     st.warning("Por favor, carregue a imagem do diagrama")
