@@ -1,33 +1,25 @@
-import io
-import time
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
+import base64
 import openai
 
-def analyze_diagram(image_bytes, azure_endpoint, azure_key):
-    # Azure OCR
-    computervision_client = ComputerVisionClient(
-        azure_endpoint, CognitiveServicesCredentials(azure_key)
-    )
-    image_stream = io.BytesIO(image_bytes)
-    ocr_result = computervision_client.read_in_stream(image_stream, raw=True)
-    operation_location = ocr_result.headers["Operation-Location"]
-    operation_id = operation_location.split("/")[-1]
-
-    while True:
-        result = computervision_client.get_read_result(operation_id)
-        if result.status not in ['notStarted', 'running']:
-            break
-        time.sleep(1)
-
-    extracted_text = ""
-    if result.status == 'succeeded':
-        for page in result.analyze_result.read_results:
-            for line in page.lines:
-                extracted_text += line.text + "\n"
-    else:
-        raise RuntimeError("OCR failed.")
+def analyze_diagram(image_bytes, openai_api_key):
+    # OpenAI Vision API (image analysis)
+    client = openai.OpenAI(api_key=openai_api_key)
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
     
+    response = client.responses.create(
+        model="gpt-4.1",
+        input=[
+            {"role": "system", "content": "You are a system architecture analyst."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": "Describe the architecture diagram, focusing on the components, their relationships, and the overall system. Do not include any other text than the description of the diagram. Do not describe the components, just identify them and their relationships. Keep it short and concise."},
+                    {"type": "input_image", "image_url": f"data:image/png;base64,{image_base64}"}
+                ]
+            }
+        ]
+    )
+    extracted_text = response.output_text
     return extracted_text
 
 def generate_stride_report(extracted_text, prompts, openai_api_key):

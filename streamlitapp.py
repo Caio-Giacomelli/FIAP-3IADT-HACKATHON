@@ -42,7 +42,7 @@ def process_image(uploaded_file, prompts):
     with st.spinner("Processando a imagem..."):
         try:
             image_bytes = uploaded_file.read()
-            st.session_state.extracted_text = analyze_diagram(image_bytes, endpoint, key)
+            st.session_state.extracted_text = analyze_diagram(image_bytes, openai_api_key)
         except Exception as e:
             st.error(f"Erro ao processar a imagem ou gerar o relatório: {e}")
             st.stop()
