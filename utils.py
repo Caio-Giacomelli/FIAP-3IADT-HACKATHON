@@ -25,7 +25,7 @@ Extracted Text:
 """,
             # Prompt Reduzido
             """
-You are an expert in system architecture and security. Carefully analyze the extracted architecture diagram text and generate a detailed STRIDE report in Brazilian Portuguese. For each STRIDE category, clearly list the risks, mitigation strategies, and provide at least one reference.
+Carefully analyze the extracted architecture diagram text and generate a detailed STRIDE report in Brazilian Portuguese. For each STRIDE category, clearly list the risks, mitigation strategies, and provide at least one reference.
 Avoid unnecessary commentary or conclusions after the report.
 After the report, create a concise markdown table summarizing each STRIDE section, its main risks, and mitigation strategies.
 Extracted Text:

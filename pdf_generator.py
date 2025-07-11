@@ -5,7 +5,7 @@ import streamlit as st
 def generate_stride_pdf(prompt, report):
     pdf = MarkdownPdf(toc_level=2, optimize=True)
     pdf.add_section(Section(f"# Relatório Stride\n"))
-    pdf.add_section(Section(f"## Prompt Utilizado\n\n```markdown\n{prompt}\n```\n"))
+    pdf.add_section(Section(f"## Prompt Utilizado\n\n{prompt}\n"))
     pdf.add_section(Section(report))
     pdf.meta["title"] = "Relatório Stride"
     buffer = io.BytesIO()

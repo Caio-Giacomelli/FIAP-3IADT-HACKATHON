@@ -1,12 +1,18 @@
-# Gerador de Relatório STRIDE
+# FIAP Hackathon: Gerador de Relatório STRIDE com base em imagens de diagramas de arquitetura
 
-Este projeto é um aplicativo Streamlit que utiliza a API de Computer Vision da Azure para extrair texto de diagramas de arquitetura e a API da OpenAI para gerar um relatório de ameaças STRIDE com base no texto extraído.
+Este projeto é um aplicativo Streamlit que utiliza a API da OpenAI para analisar imagens de diagramas de arquitetura e gerar um relatório de ameaças STRIDE com base na análise feita.
+
+## Desenvolvedores
+
+- Caio Henrique Giacomelli (RM 358131)
+- Rafael Pereira Alonso (RM 358127)
+- Wagner Dominike Eugênio de Mello (RM 358565)
 
 ## Funcionalidades
 
-Upload de diagramas de arquitetura (PNG, JPG, JPEG).
+Upload de diagramas de arquitetura em formatos PNG, JPG ou JPEG.
 
-Extração de texto do diagrama utilizando Azure Computer Vision OCR.
+Análise da imagem enviada do diagrama utilizando a API da OpenAI.
 
 Geração automática de um relatório de ameaças STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) usando a API da OpenAI.
 
@@ -26,9 +32,7 @@ pip (gerenciador de pacotes do Python)
 
 ## Você também precisará de credenciais válidas!
 
-Gere um arquivo `.env` no repositório e adicione as credenciais abaixo:
-- AZURE_ENDPOINT (endpoint para o serviço de Computer Vision da Azure)
-- AZURE_API_KEY (chave de API para o serviço de Computer Vision da Azure)
+Gere um arquivo `.env` no repositório e adicione a credencial abaixo:
 - OPENAI_API_KEY (chave de API para o uso do modelo da OpenAI)
 
 ## Instalação

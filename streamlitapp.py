@@ -6,8 +6,6 @@ from pdf_generator import generate_stride_pdf, add_pdf_download_button
 from utils import prompts, prompt_titles
 
 load_dotenv()
-endpoint = os.getenv("AZURE_ENDPOINT")
-key = os.getenv("AZURE_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 st.set_page_config(page_title="Gerador de Relatório STRIDE", layout="centered")
@@ -66,11 +64,11 @@ def process_image(uploaded_file, prompts):
 
 uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"], on_change=clear_session_state)
 
-if not endpoint or not key or not openai_api_key:
+if not openai_api_key:
     st.error("Por favor, configure as credenciais no arquivo .env")
     st.stop()
 
-if uploaded_file and endpoint and key and openai_api_key:
+if uploaded_file and openai_api_key:
     st.image(uploaded_file, caption="Diagrama de Arquitetura enviado", use_container_width=True)
     if "stride_reports" not in st.session_state:
         process_image(uploaded_file, prompts)
