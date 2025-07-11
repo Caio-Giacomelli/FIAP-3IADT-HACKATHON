@@ -61,12 +61,7 @@ def process_image(uploaded_file, prompts):
             st.error(f"Erro ao gerar relatórios: {e}")
             st.stop()
 
-
 uploaded_file = st.file_uploader("📁 Upload do Diagrama de Arquitetura", type=["png", "jpg", "jpeg"], on_change=clear_session_state)
-
-if not openai_api_key:
-    st.error("Por favor, configure as credenciais no arquivo .env")
-    st.stop()
 
 if uploaded_file and openai_api_key:
     st.image(uploaded_file, caption="Diagrama de Arquitetura enviado", use_container_width=True)
@@ -75,5 +70,8 @@ if uploaded_file and openai_api_key:
         display_results()
     else:
         display_results()
+elif not openai_api_key:
+    st.error("Por favor, configure as credenciais no arquivo .env")
+    st.stop()
 else:
     st.warning("Por favor, carregue a imagem do diagrama")

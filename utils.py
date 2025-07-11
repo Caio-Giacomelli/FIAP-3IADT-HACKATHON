@@ -7,7 +7,7 @@ Extracted Text:
 """,
             # Prompt Especializado
             """
-You are a system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
+You are a senior system architect. Take all the necessary time to create a quality response and with as much detail as possible. Validate if the answer is not contraditory in any capacity. Bring references to each of the topics. Do not be long-winded. 
 Do not generate any observation or follow-up commentary after the STRIDE report. 
 Based on the following extracted architecture diagram text, write a STRIDE report in brazillian portuguese, adding the risks, mitigation and references for the following sections:
 
@@ -33,7 +33,7 @@ Extracted Text:
 """,
             # Prompt em Português
             """
-Você é um arquiteto de sistemas especializado em segurança. Analise cuidadosamente o texto extraído do diagrama de arquitetura e elabore um relatório STRIDE detalhado em português brasileiro. Para cada categoria STRIDE, descreva claramente os riscos, estratégias de mitigação e inclua pelo menos uma referência confiável.
+Analise cuidadosamente o texto extraído do diagrama de arquitetura e elabore um relatório STRIDE detalhado em português brasileiro. Para cada categoria STRIDE, descreva claramente os riscos, estratégias de mitigação e inclua pelo menos uma referência confiável.
 Não inclua comentários adicionais ou conclusões após o relatório.
 Ao final, gere uma tabela em markdown resumindo cada seção STRIDE, seus principais riscos e as respectivas mitigações de forma objetiva.
 
